@@ -5,7 +5,7 @@ const usersRoutes = require("./routes/users-routes");
 const listsRoutes = require("./routes/lists-routes");
 
 const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use("/api/users", usersRoutes);
 app.use("/api/lists", listsRoutes);
 
