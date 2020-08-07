@@ -1,7 +1,18 @@
+// ================================================================================================================== //
+// ================================================== DEPENDENCIES ================================================== //
+// ================================================================================================================== //
+
+// External
 const { v4: uuid } = require("uuid");
+
+// Local
 const CustomError = require("../../models/custom-error");
 
-const DUMMY_USERS = [
+// ================================================================================================================== //
+// ============================================= DUMMY DATA FOR TESTING ============================================= //
+// ================================================================================================================== //
+
+let DUMMY_USERS = [
   {
     id: uuid(),
     email: "luis@email.com",
@@ -14,8 +25,17 @@ const DUMMY_USERS = [
   },
 ];
 
-const createUser = (req, res, next) => {
+// ================================================================================================================== //
+// ====================================== CONTROLLER FUNCTIONS FOR USERS ROUTES ===================================== //
+// ================================================================================================================== //
+
+const signup = (req, res, next) => {
   const { email, password } = req.body;
+
+  if (DUMMY_USERS.find((user) => user.email === email)) {
+    return next(new CustomError("User already exists", 422));
+  }
+
   const newUser = {
     id: uuid(),
     email,
@@ -27,19 +47,42 @@ const createUser = (req, res, next) => {
   res.json({ message: "User created." });
 };
 
-const authenticateUser = (req, res, next) => {
+// ================================================================================================================== //
+// ================================================================================================================== //
+
+const login = (req, res, next) => {
   const { email, password } = req.body;
+  
   const foundUser = DUMMY_USERS.find((user) => user.email === email);
-  let isAuthenticated = false;
-  if(foundUser) {
-    if(foundUser.password === password) {
-        isAuthenticated = true;
-    }
-  } else {
-      return next(new CustomError("Could not find user", 404))
+  if (!foundUser || foundUser.password !== password) {
+    return next(new CustomError("Invalid credentials", 404));
   }
-  res.json({ authenticated: isAuthenticated });
+
+  res.json({ message: "User logged in" });
 };
 
-exports.createUser = createUser;
-exports.authenticateUser = authenticateUser;
+// ================================================================================================================== //
+// ================================================================================================================== //
+
+const deleteUser = (req, res, next) => {
+  const id = req.params.uid;
+
+  if (!DUMMY_USERS.find((user) => user.id === id)) {
+    return next(new CustomError("Could not find user with that id", 404));
+  }
+
+  DUMMY_USERS = DUMMY_USERS.filter((user) => user.id !== id);
+
+  console.log(DUMMY_USERS);
+  res.json({ message: "Deleted user" });
+};
+
+// ================================================================================================================== //
+// ===================================================== EXPORTS ==================================================== //
+// ================================================================================================================== //
+
+exports.signup = signup;
+
+exports.login = login;
+
+exports.deleteUser = deleteUser;
