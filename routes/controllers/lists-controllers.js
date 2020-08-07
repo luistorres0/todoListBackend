@@ -2,8 +2,11 @@
 // ================================================== DEPENDENCIES ================================================== //
 // ================================================================================================================== //
 
+// External
 const { v4: uuid } = require("uuid");
+const { validationResult } = require("express-validator");
 
+// Local
 const CustomError = require("../../models/custom-error");
 
 // ================================================================================================================== //
@@ -30,7 +33,12 @@ let DUMMY_LISTS = [
 // ================================================================================================================== //
 
 const createList = (req, res, next) => {
-  const {authorId, title, list } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new CustomError("Invalid inputs passed, please check your data.", 422));
+  }
+
+  const { authorId, title, list } = req.body;
   const newList = {
     id: uuid(),
     authorId,
@@ -61,6 +69,11 @@ const getList = (req, res, next) => {
 // ================================================================================================================== //
 
 const updateList = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new CustomError("Invalid inputs passed, please check your data.", 422));
+  }
+
   const id = req.params.id;
   const { newList } = req.body;
 
