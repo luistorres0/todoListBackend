@@ -60,7 +60,7 @@ const createList = async (req, res, next) => {
 
 const getListById = async (req, res, next) => {
   const id = req.params.id;
-  
+
   let foundList;
   try {
     foundList = await List.findById(id);
@@ -70,6 +70,25 @@ const getListById = async (req, res, next) => {
 
   // Convert "foundList" to JS object. "getters: true" sets _id property to id.
   res.json(foundList.toObject({ getters: true }));
+};
+
+// ================================================================================================================== //
+// ================================================================================================================== //
+
+const getListsByAuthorId = async (req, res, next) => {
+  const id = req.params.id;
+
+  // let foundList;
+  // try {
+  //   foundList = await List.findById(id);
+  // } catch (err) {
+  //   return next(new CustomError("Could not find list, please try again.", 500));
+  // }
+
+  // // Convert "foundList" to JS object. "getters: true" sets _id property to id.
+  // res.json(foundList.toObject({ getters: true }));
+
+  res.json({ message: "called getListsByAuthorId()" });
 };
 
 // ================================================================================================================== //
@@ -112,6 +131,8 @@ const deleteList = (req, res, next) => {
 exports.createList = createList;
 
 exports.getListById = getListById;
+
+exports.getListsByAuthorId = getListsByAuthorId;
 
 exports.updateList = updateList;
 

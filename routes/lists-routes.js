@@ -7,7 +7,7 @@ const express = require("express");
 const { check } = require("express-validator");
 
 // Local
-const { createList, getListById, updateList, deleteList } = require("./controllers/lists-controllers");
+const { createList, getListById, updateList, deleteList, getListsByAuthorId } = require("./controllers/lists-controllers");
 
 // ================================================================================================================== //
 // ===================================================== GLOBALS ==================================================== //
@@ -22,6 +22,8 @@ const router = express.Router();
 router.post("/", [check("title").not().isEmpty(), check("list").exists()], createList);
 
 router.get("/:id", getListById);
+
+router.get("/all/:authorId", getListsByAuthorId)
 
 router.patch("/:id", [check("newList").exists()], updateList);
 
