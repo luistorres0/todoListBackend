@@ -125,12 +125,21 @@ const updateList = async (req, res, next) => {
 // ================================================================================================================== //
 // ================================================================================================================== //
 
-const deleteList = (req, res, next) => {
+const deleteList = async (req, res, next) => {
   const id = req.params.id;
 
-  DUMMY_LISTS = DUMMY_LISTS.filter((item) => item.id !== id);
+  let foundList;
+  try {
+    foundList = await List.findById(id);
+  } catch (err) {
+    return next(new CustomError("Could not find list, please try again.", 500));
+  }
 
-  console.log(DUMMY_LISTS);
+  try {
+    await foundList.remove();
+  } catch (err) {
+    return next(new CustomError("Could not complete list deletion, please try again.", 500));
+  }
 
   res.status(200).json({ message: "Deleted list" });
 };
