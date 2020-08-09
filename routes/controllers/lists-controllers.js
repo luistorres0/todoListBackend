@@ -76,19 +76,20 @@ const getListById = async (req, res, next) => {
 // ================================================================================================================== //
 
 const getListsByAuthorId = async (req, res, next) => {
-  const id = req.params.id;
+  const authorId = req.params.authorId;
 
-  // let foundList;
-  // try {
-  //   foundList = await List.findById(id);
-  // } catch (err) {
-  //   return next(new CustomError("Could not find list, please try again.", 500));
-  // }
+  let foundLists;
+  try {
+    foundLists = await List.find({ authorId: authorId });
+  } catch (err) {
+    return next(new CustomError("Failed to retrieve lists, please try again", 500));
+  }
 
-  // // Convert "foundList" to JS object. "getters: true" sets _id property to id.
-  // res.json(foundList.toObject({ getters: true }));
+  if (!foundLists || foundLists.length === 0) {
+    return next(new CustomError("Could not find any lists for that authorId.", 500));
+  }
 
-  res.json({ message: "called getListsByAuthorId()" });
+  res.json(foundLists.map((list) => list.toObject({ getters: true })));
 };
 
 // ================================================================================================================== //
