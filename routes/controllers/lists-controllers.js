@@ -8,6 +8,7 @@ const { validationResult } = require("express-validator");
 
 // Local
 const CustomError = require("../../models/custom-error");
+const List = require("../../models/list");
 
 // ================================================================================================================== //
 // ============================================= DUMMY DATA FOR TESTING ============================================= //
@@ -32,25 +33,27 @@ let DUMMY_LISTS = [
 // ====================================== CONTROLLER FUNCTIONS FOR LISTS ROUTES ===================================== //
 // ================================================================================================================== //
 
-const createList = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(new CustomError("Invalid inputs passed, please check your data.", 422));
-  }
-
-  const { authorId, title, list } = req.body;
-  const newList = {
-    id: uuid(),
-    authorId,
-    title,
-    list,
+const createList = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return next(new CustomError("Invalid inputs passed, please check your data.", 422));
+    }
+  
+    const { authorId, title, list } = req.body;
+    const newList = new List({
+      authorId,
+      title,
+      list,
+    });
+  
+    try {
+      await newList.save();
+    } catch (err) {
+      return next(new CustomError("Failed to add new list to database.", 500));
+    }
+  
+    res.json(newList);
   };
-
-  DUMMY_LISTS.push(newList);
-  console.log(DUMMY_LISTS);
-
-  res.json(newList);
-};
 
 // ================================================================================================================== //
 // ================================================================================================================== //
