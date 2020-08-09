@@ -95,7 +95,7 @@ const getListsByAuthorId = async (req, res, next) => {
 // ================================================================================================================== //
 // ================================================================================================================== //
 
-const updateList = (req, res, next) => {
+const updateList = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return next(new CustomError("Invalid inputs passed, please check your data.", 422));
@@ -104,12 +104,22 @@ const updateList = (req, res, next) => {
   const id = req.params.id;
   const { newList } = req.body;
 
-  const listIndex = DUMMY_LISTS.findIndex((item) => item.id === id);
+  let foundList;
+  try {
+    foundList = await List.findById(id);
+  } catch (err) {
+    return next(new CustomError("Could not find list, please try again.", 500));
+  }
 
-  DUMMY_LISTS[listIndex].list = newList;
+  foundList.list = [...newList];
 
-  console.log(DUMMY_LISTS);
-  res.status(200).json({ message: "Updated list" });
+  try {
+    await foundList.save();
+  } catch (err) {
+    return next(new CustomError("Failed to complete list update, please try again", 500));
+  }
+
+  res.status(200).json(foundList.toObject({ getters: true }));
 };
 
 // ================================================================================================================== //
