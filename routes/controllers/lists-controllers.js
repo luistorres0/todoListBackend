@@ -34,38 +34,42 @@ let DUMMY_LISTS = [
 // ================================================================================================================== //
 
 const createList = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return next(new CustomError("Invalid inputs passed, please check your data.", 422));
-    }
-  
-    const { authorId, title, list } = req.body;
-    const newList = new List({
-      authorId,
-      title,
-      list,
-    });
-  
-    try {
-      await newList.save();
-    } catch (err) {
-      return next(new CustomError("Failed to add new list to database.", 500));
-    }
-  
-    res.json(newList);
-  };
-
-// ================================================================================================================== //
-// ================================================================================================================== //
-
-const getList = (req, res, next) => {
-  const id = req.params.id;
-  const foundList = DUMMY_LISTS.find((item) => item.id === id);
-  if (!foundList) {
-    return next(new CustomError("Could not find list for that ID", 404));
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new CustomError("Invalid inputs passed, please check your data.", 422));
   }
 
-  res.json(foundList);
+  const { authorId, title, list } = req.body;
+  const newList = new List({
+    authorId,
+    title,
+    list,
+  });
+
+  try {
+    await newList.save();
+  } catch (err) {
+    return next(new CustomError("Failed to add new list to database.", 500));
+  }
+
+  res.json(newList);
+};
+
+// ================================================================================================================== //
+// ================================================================================================================== //
+
+const getListById = async (req, res, next) => {
+  const id = req.params.id;
+  
+  let foundList;
+  try {
+    foundList = await List.findById(id);
+  } catch (err) {
+    return next(new CustomError("Could not find list, please try again.", 500));
+  }
+
+  // Convert "foundList" to JS object. "getters: true" sets _id property to id.
+  res.json(foundList.toObject({ getters: true }));
 };
 
 // ================================================================================================================== //
@@ -107,7 +111,7 @@ const deleteList = (req, res, next) => {
 
 exports.createList = createList;
 
-exports.getList = getList;
+exports.getListById = getListById;
 
 exports.updateList = updateList;
 
