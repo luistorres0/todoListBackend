@@ -11,25 +11,6 @@ const CustomError = require("../../models/custom-error");
 const List = require("../../models/list");
 
 // ================================================================================================================== //
-// ============================================= DUMMY DATA FOR TESTING ============================================= //
-// ================================================================================================================== //
-
-let DUMMY_LISTS = [
-  {
-    id: "2342342",
-    authorId: "u1",
-    title: "today",
-    list: ["work", "eat", "sleep"],
-  },
-  {
-    id: "342342",
-    authorId: "u2",
-    title: "workout",
-    list: ["pushups", "pullups", "situps"],
-  },
-];
-
-// ================================================================================================================== //
 // ====================================== CONTROLLER FUNCTIONS FOR LISTS ROUTES ===================================== //
 // ================================================================================================================== //
 
@@ -52,7 +33,7 @@ const createList = async (req, res, next) => {
     return next(new CustomError("Failed to add new list to database.", 500));
   }
 
-  res.json(newList);
+  res.json({ list: newList.toObject({ getters: true }) });
 };
 
 // ================================================================================================================== //
@@ -65,7 +46,11 @@ const getListById = async (req, res, next) => {
   try {
     foundList = await List.findById(id);
   } catch (err) {
-    return next(new CustomError("Could not find list, please try again.", 500));
+    return next(new CustomError("Failed to get list, please try again.", 500));
+  }
+
+  if (!foundList) {
+    return next(new CustomError("Could not find list with that ID.", 404));
   }
 
   // Convert "foundList" to JS object. "getters: true" sets _id property to id.
@@ -86,7 +71,7 @@ const getListsByAuthorId = async (req, res, next) => {
   }
 
   if (!foundLists || foundLists.length === 0) {
-    return next(new CustomError("Could not find any lists for that authorId.", 500));
+    return next(new CustomError("Could not find any lists for that authorId.", 404));
   }
 
   res.json(foundLists.map((list) => list.toObject({ getters: true })));
@@ -108,7 +93,11 @@ const updateList = async (req, res, next) => {
   try {
     foundList = await List.findById(id);
   } catch (err) {
-    return next(new CustomError("Could not find list, please try again.", 500));
+    return next(new CustomError("Failed to get list, please try again.", 500));
+  }
+
+  if (!foundList) {
+    return next(new CustomError("Could not find a list for that ID.", 404));
   }
 
   foundList.list = [...newList];

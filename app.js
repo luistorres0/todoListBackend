@@ -47,7 +47,11 @@ app.use((error, req, res, next) => {
 const port = process.env.PORT || 5001;
 
 mongoose
-  .connect(process.env.HOST_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.DB_HOST_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+  })
   .then(() => {
     app.listen(port, () => {
       console.log(`Listening on port ${port}...`);

@@ -8,29 +8,13 @@ const { validationResult } = require("express-validator");
 
 // Local
 const CustomError = require("../../models/custom-error");
-
-// ================================================================================================================== //
-// ============================================= DUMMY DATA FOR TESTING ============================================= //
-// ================================================================================================================== //
-
-let DUMMY_USERS = [
-  {
-    id: uuid(),
-    email: "luis@email.com",
-    password: "coder123",
-  },
-  {
-    id: uuid(),
-    email: "jeanette@email.com",
-    password: "baker123",
-  },
-];
+const User = require("../../models/user");
 
 // ================================================================================================================== //
 // ====================================== CONTROLLER FUNCTIONS FOR USERS ROUTES ===================================== //
 // ================================================================================================================== //
 
-const signup = (req, res, next) => {
+const signup = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return next(new CustomError("Invalid inputs passed, please check your data.", 422));
@@ -38,30 +22,47 @@ const signup = (req, res, next) => {
 
   const { email, password } = req.body;
 
-  if (DUMMY_USERS.find((user) => user.email === email)) {
-    return next(new CustomError("User already exists", 422));
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email: email });
+  } catch (err) {
+    return next(new CustomError("Signup failed, please try again.", 500));
   }
 
-  const newUser = {
-    id: uuid(),
+  if (existingUser) {
+    return next(new CustomError("User already exists, please login instead.", 422));
+  }
+
+  const newUser = new User({
     email,
     password,
-  };
+    lists: "nothing yet",
+  });
 
-  DUMMY_USERS.push(newUser);
-  console.log(DUMMY_USERS);
-  res.json({ message: "User created." });
+  try {
+    await newUser.save();
+  } catch (err) {
+    return next(new CustomError("Signup failed, please try again", 500));
+  }
+
+  res.status(201).json({ user: newUser.toObject({ getters: true }) });
 };
 
 // ================================================================================================================== //
 // ================================================================================================================== //
 
-const login = (req, res, next) => {
+const login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  const foundUser = DUMMY_USERS.find((user) => user.email === email);
+  let foundUser;
+  try {
+    foundUser = await User.findOne({ email: email });
+  } catch (err) {
+    return next(new CustomError("Login failed, please try again later", 500));
+  }
+
   if (!foundUser || foundUser.password !== password) {
-    return next(new CustomError("Invalid credentials", 404));
+    return next(new CustomError("Invalid credentials", 401));
   }
 
   res.json({ message: "User logged in" });
@@ -70,16 +71,26 @@ const login = (req, res, next) => {
 // ================================================================================================================== //
 // ================================================================================================================== //
 
-const deleteUser = (req, res, next) => {
+const deleteUser = async (req, res, next) => {
   const id = req.params.uid;
 
-  if (!DUMMY_USERS.find((user) => user.id === id)) {
-    return next(new CustomError("Could not find user with that id", 404));
+  let foundUser;
+  try {
+    foundUser = await User.findById(id);
+  } catch (err) {
+    return next(new CustomError("Failed to delete user, try again later.", 500));
   }
 
-  DUMMY_USERS = DUMMY_USERS.filter((user) => user.id !== id);
+  if (!foundUser) {
+    return next(new CustomError("User not found for this ID.", 404));
+  }
 
-  console.log(DUMMY_USERS);
+  try {
+    await foundUser.remove();
+  } catch (err) {
+    return next(new CustomError("Failed to delete user, try again later.", 500));
+  }
+
   res.json({ message: "Deleted user" });
 };
 
