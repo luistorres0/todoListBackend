@@ -5,10 +5,12 @@
 // External
 const { v4: uuid } = require("uuid");
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 
 // Local
 const CustomError = require("../../models/custom-error");
 const User = require("../../models/user");
+const List = require("../../models/list");
 
 // ================================================================================================================== //
 // ====================================== CONTROLLER FUNCTIONS FOR USERS ROUTES ===================================== //
@@ -36,13 +38,13 @@ const signup = async (req, res, next) => {
   const newUser = new User({
     email,
     password,
-    lists: "nothing yet",
+    lists: [],
   });
 
   try {
     await newUser.save();
   } catch (err) {
-    return next(new CustomError("Signup failed, please try again", 500));
+    return next(new CustomError("Signup failed, please try again.", 500));
   }
 
   res.status(201).json({ user: newUser.toObject({ getters: true }) });
@@ -58,11 +60,11 @@ const login = async (req, res, next) => {
   try {
     foundUser = await User.findOne({ email: email });
   } catch (err) {
-    return next(new CustomError("Login failed, please try again later", 500));
+    return next(new CustomError("Login failed, please try again later.", 500));
   }
 
   if (!foundUser || foundUser.password !== password) {
-    return next(new CustomError("Invalid credentials", 401));
+    return next(new CustomError("Invalid credentials, please try again.", 401));
   }
 
   res.json({ message: "User logged in" });
@@ -86,7 +88,11 @@ const deleteUser = async (req, res, next) => {
   }
 
   try {
-    await foundUser.remove();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await foundUser.remove({ session: sess });
+    await List.deleteMany({ authorId: id }, { session: sess });
+    await sess.commitTransaction();
   } catch (err) {
     return next(new CustomError("Failed to delete user, try again later.", 500));
   }

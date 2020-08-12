@@ -5,10 +5,12 @@
 // External
 const { v4: uuid } = require("uuid");
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 
 // Local
 const CustomError = require("../../models/custom-error");
 const List = require("../../models/list");
+const User = require("../../models/user");
 
 // ================================================================================================================== //
 // ====================================== CONTROLLER FUNCTIONS FOR LISTS ROUTES ===================================== //
@@ -27,8 +29,24 @@ const createList = async (req, res, next) => {
     list,
   });
 
+  let user;
   try {
-    await newList.save();
+    user = await User.findById(authorId);
+  } catch (err) {
+    return next(new CustomError("Failed to create list, please try again later.", 500));
+  }
+
+  if (!user) {
+    return next(new CustomError("Could not find user with provided author ID.", 404));
+  }
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await newList.save({ session: sess });
+    user.lists.push(newList);
+    await user.save({ session: sess });
+    await sess.commitTransaction();
   } catch (err) {
     return next(new CustomError("Failed to add new list to database.", 500));
   }
@@ -119,13 +137,22 @@ const deleteList = async (req, res, next) => {
 
   let foundList;
   try {
-    foundList = await List.findById(id);
+    foundList = await List.findById(id).populate("authorId");
   } catch (err) {
-    return next(new CustomError("Could not find list, please try again.", 500));
+    return next(new CustomError("Failed to delete list, please try again.", 500));
+  }
+
+  if (!foundList) {
+    return next(new CustomError("Could not find list for that ID.", 404));
   }
 
   try {
-    await foundList.remove();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await foundList.remove({ session: sess });
+    foundList.authorId.lists.pull(foundList);
+    await foundList.authorId.save({ session: sess });
+    await sess.commitTransaction();
   } catch (err) {
     return next(new CustomError("Could not complete list deletion, please try again.", 500));
   }
