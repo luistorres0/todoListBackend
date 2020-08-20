@@ -6,6 +6,7 @@
 const { v4: uuid } = require("uuid");
 const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 // Local
 const CustomError = require("../../models/custom-error");
@@ -35,9 +36,16 @@ const signup = async (req, res, next) => {
     return next(new CustomError("User already exists, please login instead.", 422));
   }
 
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    return next(new CustomError("Signup failed, please try again.", 500));
+  }
+
   const newUser = new User({
     email,
-    password,
+    password: hashedPassword,
     lists: [],
   });
 
@@ -63,11 +71,18 @@ const login = async (req, res, next) => {
     return next(new CustomError("Login failed, please try again later.", 500));
   }
 
-  if (!foundUser || foundUser.password !== password) {
+  if (!foundUser) {
     return next(new CustomError("Invalid credentials, please try again.", 401));
   }
 
-  res.json({ message: "User logged in" });
+  let isValidPassword = false;
+  try {
+    isValidPassword = await bcrypt.compare(password, foundUser.password);
+  } catch (err) {
+    return next(new CustomError("Invalid credentials, please try again.", 401));
+  }
+
+  res.json({ message: "User logged in", user: foundUser.toObject({ getters: true }) });
 };
 
 // ================================================================================================================== //
