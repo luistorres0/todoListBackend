@@ -8,6 +8,7 @@ const { check } = require("express-validator");
 
 // Local
 const { signup, login, deleteUser } = require("./controllers/users.controllers");
+const checkAuth = require("../middleware/check-auth");
 
 // ================================================================================================================== //
 // ===================================================== GLOBALS ==================================================== //
@@ -26,6 +27,9 @@ router.post(
 );
 
 router.post("/login", login);
+
+// Authorization
+router.use(checkAuth)
 
 router.delete("/:uid", deleteUser);
 

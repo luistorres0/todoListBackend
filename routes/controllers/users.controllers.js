@@ -7,6 +7,7 @@ const { v4: uuid } = require("uuid");
 const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 // Local
 const CustomError = require("../../models/custom-error");
@@ -55,7 +56,16 @@ const signup = async (req, res, next) => {
     return next(new CustomError("Signup failed, please try again.", 500));
   }
 
-  res.status(201).json({ user: newUser.toObject({ getters: true }) });
+  let token;
+  try {
+    token = jwt.sign({ userId: newUser.id, email: newUser.email }, process.env.SECRET, {
+      expiresIn: "1hr",
+    });
+  } catch (err) {
+    return next(new CustomError("Signup failed, please try again.", 500));
+  }
+
+  res.status(201).json({ userId: newUser.id, token: token });
 };
 
 // ================================================================================================================== //
@@ -79,10 +89,23 @@ const login = async (req, res, next) => {
   try {
     isValidPassword = await bcrypt.compare(password, foundUser.password);
   } catch (err) {
+    return next(new CustomError("Login failed, please try again.", 500));
+  }
+
+  if (!isValidPassword) {
     return next(new CustomError("Invalid credentials, please try again.", 401));
   }
 
-  res.json({ message: "User logged in", user: foundUser.toObject({ getters: true }) });
+  let token;
+  try {
+    token = jwt.sign({ userId: foundUser.id, email: foundUser.email }, process.env.SECRET, {
+      expiresIn: "1hr",
+    });
+  } catch (err) {
+    return next(new CustomError("Signup failed, please try again.", 500));
+  }
+
+  res.status(201).json({ userId: foundUser.id, token: token });
 };
 
 // ================================================================================================================== //

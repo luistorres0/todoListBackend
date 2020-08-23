@@ -71,6 +71,10 @@ const getListById = async (req, res, next) => {
     return next(new CustomError("Could not find list with that ID.", 404));
   }
 
+  if (foundList.authorId.toString() !== req.userData.userId) {
+    return next(new CustomError("You are not authorized to access this resource.", 403));
+  }
+
   // Convert "foundList" to JS object. "getters: true" sets _id property to id.
   res.json(foundList.toObject({ getters: true }));
 };
