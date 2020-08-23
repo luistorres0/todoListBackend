@@ -126,6 +126,10 @@ const updateList = async (req, res, next) => {
     return next(new CustomError("Could not find a list for that ID.", 404));
   }
 
+  if (foundList.authorId.toString() !== req.userData.userId) {
+    return next(new CustomError("You are not authorized to access this resource.", 403));
+  }
+
   foundList.list = [...newList];
 
   try {
