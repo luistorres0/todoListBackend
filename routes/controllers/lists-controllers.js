@@ -85,6 +85,10 @@ const getListById = async (req, res, next) => {
 const getListsByAuthorId = async (req, res, next) => {
   const authorId = req.params.authorId;
 
+  if (authorId !== req.userData.userId) {
+    return next(new CustomError("You are not authorized to access this resource.", 403));
+  }
+
   let foundLists;
   try {
     foundLists = await List.find({ authorId: authorId });
