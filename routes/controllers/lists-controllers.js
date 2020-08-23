@@ -158,6 +158,10 @@ const deleteList = async (req, res, next) => {
     return next(new CustomError("Could not find list for that ID.", 404));
   }
 
+  if (foundList.authorId.id !== req.userData.userId) {
+    return next(new CustomError("You are not authorized to access this resource.", 403));
+  }
+
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
