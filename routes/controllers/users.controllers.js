@@ -125,6 +125,10 @@ const deleteUser = async (req, res, next) => {
     return next(new CustomError("User not found for this ID.", 404));
   }
 
+  if (foundUser.id !== req.userData.userId) {
+    return next(new CustomError("You are not authorized to access this resource.", 403));
+  }
+
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
