@@ -24,7 +24,7 @@ const signup = async (req, res, next) => {
     return next(new CustomError("Invalid inputs passed, please check your data.", 422));
   }
 
-  const { email, password } = req.body;
+  const { name, email, password } = req.body;
 
   let existingUser;
   try {
@@ -45,6 +45,7 @@ const signup = async (req, res, next) => {
   }
 
   const newUser = new User({
+    name,
     email,
     password: hashedPassword,
     lists: [],
@@ -65,7 +66,7 @@ const signup = async (req, res, next) => {
     return next(new CustomError("Signup failed, please try again.", 500));
   }
 
-  res.status(201).json({ userId: newUser.id, token: token });
+  res.status(201).json({ userId: newUser.id, name: newUser.name, token: token });
 };
 
 // ================================================================================================================== //
@@ -105,7 +106,7 @@ const login = async (req, res, next) => {
     return next(new CustomError("Signup failed, please try again.", 500));
   }
 
-  res.status(201).json({ userId: foundUser.id, token: token });
+  res.status(201).json({ userId: foundUser.id, name: foundUser.name, token: token });
 };
 
 // ================================================================================================================== //
