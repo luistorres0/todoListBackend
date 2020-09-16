@@ -6,7 +6,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-require("dotenv").config();
 
 // Local
 const usersRoutes = require("./routes/users-routes");
@@ -61,11 +60,14 @@ app.use((error, req, res, next) => {
 const port = process.env.PORT || 5001;
 
 mongoose
-  .connect(process.env.DB_HOST_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-  })
+  .connect(
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.clhvc.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`,
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useCreateIndex: true,
+    }
+  )
   .then(() => {
     app.listen(port, () => {
       console.log(`Listening on port ${port}...`);

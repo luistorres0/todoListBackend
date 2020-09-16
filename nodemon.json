@@ -1,0 +1,8 @@
+{
+    "env": {
+        "DB_USER": "Luis",
+        "DB_PASSWORD": "CosmoGeorgeJake",
+        "DB_NAME": "todoList",
+        "SECRET":"cosmo_jake_george_are awesome"
+    }
+}
